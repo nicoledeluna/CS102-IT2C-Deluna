@@ -1,0 +1,69 @@
+---
+title: "LabExcercise1"
+author: "Nicole De Luna"
+date: "2024-02-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+URL and libraries
+```{r}
+
+library(rvest)
+library(dplyr)
+library(polite)
+library(stringr)
+
+url <- https://www.amazon.com/?&tag=phtxtabkgode-20&ref=pd_sl_73t48p1dlf_e&adgrpid=151590336221&hvpone=&hvptwo=&hvadid=677569135158&hvpos=&hvnetw=g&hvrand=9118480389737403822&hvqmt=e&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9067222&hvtargid=kwd-10573980&hydadcr=9911_13618523&language=en_US
+
+session <- bow(url, user_agent = "Educational purposes")
+session
+
+```
+
+
+```{r}
+ url2 <- https://www.amazon.com/ALLSWIFIT-Breathable-Lightweight-Sneakers-SARR009W/dp/B0C8NPR9T2/ref=sr_1_1_sspa?crid=HO0IU8RA96RV&keywords=shoes+womens+sneakers&qid=1707357856&sprefix=shoes+women%2Caps%2C348&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1
+session2 <- bow(url2, user_agent = "Educational purposes")
+shoes_url2<- read_html(url2)
+
+shoesname2 <- shoes_url2 %>%
+  html_nodes("span#productTitle.a-size-large.product-title-word-break") %>%
+  html_text
+shoesname2
+
+shoesprice2 <- shoes_url2 %>%
+   html_nodes("span.a-price-whole") %>%
+   html_text
+shoesprice2
+
+shoesratings2 <- shoes_url2 %>%
+   html_nodes("span#acrCustomerReviewText.a-size-base ") %>%
+   html_text
+shoesratings2
+
+shoesreviews2 <- shoes_url2 %>%
+   html_nodes("span#acrCustomerReviewText.a-size-base ") %>%
+   html_text
+shoesreviews2
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
