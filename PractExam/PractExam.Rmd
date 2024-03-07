@@ -1,0 +1,151 @@
+---
+title: "Practical"
+author: "Nicole De Luna"
+date: "2024-03-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+data("warpbreaks")
+warpbreaks
+```
+1.
+```{r}
+str(warpbreaks)
+```
+
+2. How many observations does it have?
+```{r}
+#answer
+#it has 54 observations.
+```
+3.
+```{r}
+typeof(warpbreaks$breaks)
+typeof(warpbreaks$wool)
+typeof(warpbreaks$tension)
+
+```
+
+4.
+```{r=error}
+
+```
+
+B. Load the exampleFile.txt
+1.
+```{r}
+file <-file("exampleFile.txt")
+
+readfile<- readLines(file)
+readfile
+
+```
+
+B2.
+```{r}
+comments <- readfile[grepl("^//", readfile)]
+comments
+
+dateLine<- readfile[grepl("^//", readfile)]
+dateLine
+```
+
+B3.
+```{r}
+subcomment <- (comments)[1]
+
+date <-gsub ("//Survey data, Created : ", "", subcomment)
+date
+
+cat ("It was created: ", date,"/n")
+```
+
+B4a.
+```{r}
+splitdata <- strsplit(dateLine, ";")
+splitdata
+```
+
+4b.
+```{r}
+maxvector <- max(lengths(splitdata))
+maxvector
+
+
+rowappend <- lapply(splitdata, function(x) c(x, rep(NA, maxvector - length(x))))
+rowappend
+```
+
+4c.
+```{r}
+un_data <- unlist(rowappend)
+
+datamatrix <- matrix(un_data, ncol = 4, nrow = 3)
+datamatrix
+
+```
+
+4d.
+```{r}
+field_names <- comments[2:4]
+
+field_names1 <- gsub("//", "",field_names)
+field_names1
+
+rownames(datamatrix) <- field_names1
+print(datamatrix)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
