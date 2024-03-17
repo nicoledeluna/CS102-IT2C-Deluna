@@ -1,0 +1,98 @@
+---
+title: "LabExercise1"
+author: "Nicole De Luna"
+date: "2024-03-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+
+library(rvest)
+library(httr)
+library(dplyr)
+library(polite)
+library(stringr)
+
+# Define the URL
+url <- 'https://www.imdb.com/chart/top/'
+session <- bow(url,
+               user_agent = "Educational")
+session
+
+```
+
+```{r}
+# Scrape the webpage
+page <- read_html(url)
+
+# Extracting titles
+library(rvest)
+ title <- scrape(session)%>%
+  html_nodes("h3.ipc-title__text")%>%
+  html_text
+  title
+
+# Extracting ratings
+ rate <- scrape(session) %>%
+html_nodes("span.ipc-rating-star--imdb")  %>%
+html_attr("aria-label")
+rate
+
+# Extracting vote counts
+votec <- scrape(session) %>%
+  html_nodes("span.ipc-rating-star--voteCount") %>%
+  html_text
+
+# Extracting year and episodes
+shesh <- read_html(url)
+# Create a data frame
+imdb_data <- data.frame(
+  Title = titles,
+  Rating = as.numeric(ratings),
+  Vote_Count = as.numeric(gsub(",", "", vote_counts)),
+  Year_Episodes = year_episodes,
+  stringsAsFactors = FALSE
+)
+
+# Print the data
+print(imdb_data)
+
+write.csv(imdb_data, file = "imdb_top_movies.csv", row.names = FALSE)
+
+# Print a message indicating the file has been saved
+cat("CSV file 'imdb_top_movies.csv' has been saved successfully.\n")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
