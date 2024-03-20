@@ -1,0 +1,819 @@
+---
+title: "lab1"
+author: "Nicole De Luna"
+date: "2024-03-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(polite)
+library(rvest)
+library(dplyr)
+
+
+url <- "https://www.imdb.com/chart/toptv/?ref_=nv_tvv_250"
+
+session <- bow(url, user_agent = "Educational Purposes")
+session
+
+mpm_url <- read_html(url)
+
+```
+
+
+
+```{r}
+#scraping titles and their ranks
+movie_title <- mpm_url %>%
+    html_nodes("h3.ipc-title__text") %>%
+    html_text()
+
+#subset for the top 250 tv shows. Taking only 200 titles.
+sub_movie <- as.data.frame(movie_title[51:250])
+sub_movie
+
+colnames(sub_movie) <- "ranks"
+split_title <- strsplit(as.character(sub_movie$ranks), ".", fixed = TRUE )
+split_title <- data.frame(do.call(rbind, split_title))
+
+#remove duplicate columns
+split_title <- split_title[-c(3:5)]
+
+#rename columns
+colnames(split_title) <- c("ranks","title")
+split_title
+
+#make into a data frame
+rank_title <- as.data.frame(split_title)
+rank_title
+```
+
+
+```{r}
+library(stringr)
+#scraping the  rating
+rating <- scrape(session) %>%
+  html_nodes("span.ipc-rating-star--imdb")  %>%
+html_attr("aria-label")
+rating
+
+#subset the scraped data
+sub_rate <- as.data.frame(rating[51:250])
+head(sub_rate)
+tail(sub_rate)
+
+#renaming the column
+colnames(sub_rate) <- "rate"
+split_rate <- strsplit(as.character(sub_rate$rate),".",fixed = TRUE)
+split_rate <- data.frame(do.call(rbind,split_rate))
+
+#extract only the ratings
+ratings <- str_extract(sub_rate$rate, "\\d+\\.\\d+")
+ratings
+#make this into a data frame
+rates <- as.data.frame(ratings)
+```
+
+
+
+```{r}
+#scraping the vote counts
+voteCount <- scrape(session) %>%
+  html_nodes("span.ipc-rating-star--voteCount") %>%
+  html_text
+
+#subset scraped data of vote counts
+sub_vote <- as.data.frame(voteCount[51:250])
+sub_vote
+
+```
+
+```{r}
+# Combine in one data frame
+first_data <- data.frame(rank_title,
+                    rates,
+                    vote_Count = sub_vote
+      
+
+)
+first_data
+```
+
+```{r}
+write.csv(data1, "200TVShows.csv")
+
+read.csv("200TVShows.csv")
+```
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create data frame
+reviewsdata1 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_one)
+}
+tvshow_one <- c("https://www.imdb.com/title/tt0108778/reviews?ref_=tt_urv")
+reviews_one <- scrape_reviews(tvshow_one[1])
+reviews_one
+```
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create data frame
+reviewsdata2 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_two)
+}
+tvshow_two <- c("https://www.imdb.com/title/tt0388629/reviews?ref_=tt_urv")
+reviews_two <- scrape_reviews(tvshow_two[1])
+reviews_two
+```
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create data frame
+reviewsdata3 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_three)
+}
+tvshow_three <- c("https://www.imdb.com/title/tt0112130/reviews?ref_=tt_urv")
+review_three <- scrape_reviews(tvshow3[1])
+reviews3
+```
+
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create data frame
+reviewsdata4 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_four)
+}
+tvshow_four <- c("https://www.imdb.com/title/tt5182866/reviews?ref_=tt_urv")
+reviews_four <- scrape_reviews(tvshow_four[1])
+reviews_four
+```
+
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create a data frame
+reviewsdata_five <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_five)
+}
+tvshow_five <- c("https://www.imdb.com/title/tt2442560/reviews?ref_=tt_urv")
+reviews_five <- scrape_reviews(tvshow_five[1])
+reviews_five
+```
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create a data frame
+reviewsdata_six <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_six)
+}
+tvshow_six <- c("https://www.imdb.com/title/tt0096697/reviews?ref_=tt_urv")
+reviews_six <- scrape_reviews(tvshow_six[1])
+reviews_six
+```
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get on;y the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create a data frame
+reviewsdata_seven <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_seven)
+}
+tvshow_seven <- c("https://www.imdb.com/title/tt4508902/reviews?ref_=tt_urv")
+reviews_seven <- scrape_reviews(tvshow_seven[1])
+reviews_seven
+```
+
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create a data frame
+reviewsdata_eyt <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_eyt)
+}
+tvshow_eyt <- c("https://www.imdb.com/title/tt4574334/reviews?ref_=tt_urv")
+reviews_eyt <- scrape_reviews(tvshow_eyt[1])
+reviews_eyt
+```
+
+
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#Split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#Split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create a data frame
+reviewsdata9 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_nine)
+}
+tvshow_nine <- c("https://www.imdb.com/title/tt0086661/reviews?ref_=tt_urv")
+reviews_nine <- scrape_reviews(tvshow_nine[1])
+reviews_nine
+```
+
+
+```{r}
+scrapereviews <- function(url) {
+page <- read_html(url)
+  
+title_reviews <- page %>%
+    html_nodes(".title") %>%
+    html_text()
+
+#split the output to get only the rates w/out the \n.
+review_split <- unlist(strsplit(title_reviews, "\n"))
+review_split
+ 
+rating_reviews <- page %>%
+    html_nodes(".rating-other-user-rating") %>%
+    html_text()
+  
+#split the output to get only the rates w/out the \n.
+rate_split <- unlist(strsplit(rating_reviews, "\\s+"))
+rate_split
+ 
+dates_reviews <- page %>%
+    html_nodes(".review-date") %>%
+    html_text()
+ 
+users_reviews <- page %>%
+    html_nodes(".display-name-link") %>%
+    html_text()
+ 
+text_review <- page %>%
+    html_nodes("div.text.show-more__control")%>%
+    html_text()
+ 
+ 
+  max_length <- max(length(review_split), length(rate_split), length(dates_reviews), length(users_reviews), length(text_review))
+ 
+ 
+  change <- function(x, target_length) {
+    if (length(x) < target_length) {
+      c(x, rep(NA, target_length - length(x)))
+    } else {
+      x
+    }
+  }
+ 
+ 
+  title_reviews <- change(review_split, max_length)
+  rating_reviews <-change(rate_split, max_length)
+  dates_reviews <- change(dates_reviews, max_length)
+  users_reviews <- change(users_reviews, max_length)
+  text_review <- change(text_review, max_length)
+ 
+# Create data frame
+reviewsdata10 <- data.frame(
+    Reviewers = users_reviews,
+    Reviews = title_reviews,
+    Ratings = rating_reviews,
+    Date = dates_reviews,
+    TextReviews = text_review
+  )
+ 
+  return(reviewsdata_ten)
+}
+tvshow_ten <- c("https://www.imdb.com/title/tt4786824/reviews?ref_=tt_urv")
+reviews_ten <- scrape_reviews(tvshow10[1])
+reviews10
+```
+
+
+```{r}
+#combined those output into one data frame using rbind
+Finale_reviews <- rbind(reviews1,
+                       reviews2,
+                       reviews3,
+                       reviews4,
+                       reviews5,
+                       reviews6,
+                       reviews7,
+                       reviews8,
+                       reviews9,
+                       reviews10
+)
+Finale_reviews
+```
+
+
+
+```{r}
+write.csv(Finale_reviews, "TVShowsReview.csv")
+
+read.csv("TVShowsReview.csv")
+```
+
+
+
+
+
+
+
+
